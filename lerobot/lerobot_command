@@ -1,0 +1,94 @@
+lerobot-find-port
+follower(black)검정색
+/dev/ttyACM0
+leader(white)흰색
+/dev/ttyACM1
+
+sudo chmod 777 -R /dev/ttyACM*
+
+lerobot-setup-motors \
+    --robot.type=so101_follower \
+    --robot.port=/dev/ttyACM1
+
+lerobot-setup-motors \
+    --teleop.type=so101_leader \
+    --teleop.port=/dev/ttyACM0
+    
+    
+lerobot-calibrate \
+    --robot.type=so101_follower \
+    --robot.port=/dev/ttyACM1 \
+    --robot.id=my_follower
+    
+lerobot-calibrate \
+    --teleop.type=so101_leader \
+    --teleop.port=/dev/ttyACM0 \
+    --teleop.id=my_leader
+    
+ 
+lerobot-teleoperate \
+    --robot.type=so101_follower \
+    --robot.port=/dev/ttyACM0 \
+    --robot.id=my_follower \
+    --teleop.type=so101_leader \
+    --teleop.port=/dev/ttyACM1 \
+    --teleop.id=my_leader
+
+lerobot-find-cameras opencv
+Follower cam
+/dev/video4
+Topview cam
+/dev/video2
+
+
+lerobot-teleoperate \
+  --robot.type=so101_follower \
+  --robot.port=/dev/ttyACM0 \
+  --robot.id=my_follower \
+  --robot.cameras="{ front: {type: opencv, index_or_path: 4, width: 640, height: 480, fps: 30, fourcc: MJPG}, top: {type: opencv, index_or_path: 2, width: 640, height: 480, fps: 30, fourcc: MJPG}}" \
+  --teleop.type=so101_leader \
+  --teleop.port=/dev/ttyACM1 \
+  --teleop.id=my_leader \
+  --display_data=true
+  
+lerobot-record \
+    --robot.type=so101_follower \
+    --robot.port=/dev/ttyACM0 \
+    --robot.id=my_follower \
+    --robot.cameras="{ front: {type: opencv, index_or_path: 4, width: 640, height: 480, fps: 30, fourcc: MJPG}, top: {type: opencv, index_or_path: 2, width: 640, height: 480, fps: 30, fourcc: MJPG}}" \
+    --teleop.type=so101_leader \
+    --teleop.port=/dev/ttyACM1 \
+    --teleop.id=my_leader \
+    --display_data=true \
+    --dataset.repo_id=data/pick_and_place \
+    --dataset.num_episodes=10 \
+    --dataset.single_task="move small cube into the box"
+    
+    
+LD_PRELOAD=$CONDA_PREFIX/lib/libstdc++.so.6 \
+lerobot-train \
+  --policy.type=act \
+  --dataset.repo_id=data/pick_and_place_merged \
+  --policy.use_amp=true \
+  --batch_size=16 \
+  --steps=20000 \
+  --output_dir=outputs/train/act_pick_and_place \
+  --job_name=pick_and_place \
+  --policy.device=cuda \
+  --wandb.enable=true \
+  --policy.push_to_hub=false
+  
+
+HF_HUB_OFFLINE=1 lerobot-record \
+  --robot.type=so101_follower \
+  --robot.port=/dev/ttyACM0 \
+  --robot.id=my_follower \
+  --robot.cameras="{ front: {type: opencv, index_or_path: 4, width: 640, height: 480, fps: 30, fourcc: MJPG}, top: {type: opencv, index_or_path: 2, width: 640, height: 480, fps: 30, fourcc: MJPG}}" \
+  --policy.path=outputs/train/act_pick_and_place/checkpoints/last/pretrained_model \
+  --policy.device=cuda \
+  --display_data=true \
+  --dataset.repo_id=local/eval_pick_and_place_1 \
+  --dataset.single_task="move small cube into the box" \
+  --dataset.num_episodes=5 \
+  --dataset.episode_time_s=60 \
+  --dataset.push_to_hub=false
