@@ -341,6 +341,7 @@ class SmolVLAPolicy(PreTrainedPolicy):
         self._queues = populate_queues(self._queues, batch, exclude_keys=[ACTION])
 
         if self._check_get_actions_condition():
+            # import logging; logging.getLogger(__name__).warning(f"[DEBUG] Regenerating action chunk, queue_len_before={len(self._queues[ACTION])}")
             actions = self._get_action_chunk(batch, noise)
 
             # `self.predict_action_chunk` returns a (batch_size, n_action_steps, action_dim) tensor, but the queue

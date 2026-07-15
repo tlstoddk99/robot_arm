@@ -282,6 +282,20 @@ def send_next_action(
     Returns the action dict that was sent, or ``None`` if no action was
     ready (e.g. empty async queue, interpolator not yet primed).
     """
+
+    # import logging, time
+    # _now = time.perf_counter()
+    # if not hasattr(send_next_action, "_tick_count"):
+    #     send_next_action._tick_count = 0
+    #     send_next_action._t0 = _now
+    # send_next_action._tick_count += 1
+    # if _now - send_next_action._t0 >= 1.0:
+    #     logging.getLogger(__name__).warning(
+    #         f"[TICKRATE] {send_next_action._tick_count} ticks in last {_now - send_next_action._t0:.2f}s"
+    #     )
+    #     send_next_action._tick_count = 0
+    #     send_next_action._t0 = _now
+
     engine = ctx.policy.inference
     features = ctx.data.dataset_features
     ordered_keys = ctx.data.ordered_action_keys

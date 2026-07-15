@@ -192,6 +192,19 @@ from lerobot.utils.process import ProcessSignalHandler
 from lerobot.utils.utils import init_logging
 from lerobot.utils.visualization_utils import init_rerun
 
+# --- 성능 패치: 이미 같은 모드면 재귀 순회 스킵 ---
+import torch.nn as nn
+
+_original_train = nn.Module.train
+
+def _fast_train(self, mode: bool = True):
+    if self.training == mode:
+        return self
+    return _original_train(self, mode)
+
+nn.Module.train = _fast_train
+# --- 패치 끝 ---
+
 logger = logging.getLogger(__name__)
 
 
