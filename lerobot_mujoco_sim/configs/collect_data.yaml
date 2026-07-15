@@ -1,0 +1,32 @@
+seed: null
+repo_name: so101_pnp
+num_demo: 1
+root: ./data/demo_data_so101
+task_name: Put blue block in the bin
+xml_path: ./asset/scene_so101_y.xml
+# Target object to pick: blue block (see obj_blocks.xml)
+pick_body_name: body_obj_block_2
+place_body_name: body_obj_bin
+env_robot_profile: so101
+offline_local_only: true
+delete_existing_dataset: false
+robot_type: so101
+fps: 20
+control_hz: 40  # control loop rate; higher = faster arm (e.g. 40, 50)
+image_size: 256
+image_writer_threads: 10
+image_writer_processes: 5
+cleanup_images: true
+spawn_x_min: 0.21
+spawn_x_max: 0.27
+spawn_y_min: 0.04
+spawn_y_max: 0.16
+spawn_z_min: 0.815
+spawn_z_max: 0.815
+spawn_min_dist: 0.01
+spawn_xy_margin: 0.0
+spawn_fallback_min_dist: 0.1
+
+# Mink-based IK / controller config (batch collector)
+ee_site_name: gripperframe
+# arm_joint_names: ["shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll", "gripper"]

@@ -1,0 +1,26 @@
+.git
+.gitignore
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local artifacts and outputs
+checkpoints/
+media/
+data/
+outputs/
+runs/
+logs/
+wandb/
+.cache/
+
+# Notebook outputs and editor files
+.ipynb_checkpoints/
+.DS_Store
+
+# Local secrets/docs not needed at runtime image build
+token.txt
+PATH_FIX_NOTES.md
+REFACTORING_SUMMARY.md

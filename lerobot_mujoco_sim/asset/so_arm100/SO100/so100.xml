@@ -1,0 +1,60 @@
+<mujoco model="so_arm100">
+  <compiler angle="radian"/>
+  <default>
+    <default class="so100_servo">
+      <joint damping="0.60" frictionloss="0.052" armature="0.028"/>
+      <position kp="300" kv="2.0" forcerange="-3.35 3.35"/>
+    </default>
+  </default>
+  <asset>
+    <mesh name="Base" file="assets/Base.stl"/>
+    <mesh name="Rotation_Pitch" file="assets/Rotation_Pitch.stl"/>
+    <mesh name="Upper_Arm" file="assets/Upper_Arm.stl"/>
+    <mesh name="Lower_Arm" file="assets/Lower_Arm.stl"/>
+    <mesh name="Wrist_Pitch_Roll" file="assets/Wrist_Pitch_Roll.stl"/>
+  </asset>
+  <worldbody>
+    <body name="base" pos="0.00 -0.35 0.805" quat="0.707107 0 0 -0.707107">
+      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="Base"/>
+      <body name="shoulder" pos="0 -0.0452 0.0165" quat="0.707109 0.707105 0 0">
+      <inertial pos="-9.07886e-05 0.0590972 0.031089" mass="0.119226" diaginertia="5.94278e-05 5.89975e-05 3.13712e-05"/>
+      <joint name="shoulder_pan" pos="0 0 0" axis="0 1 0" range="-2 2" actuatorfrcrange="-35 35"/>
+      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="Rotation_Pitch"/>
+      <body name="upper_arm" pos="0 0.1025 0.0306" quat="0.62161 -0.783327 0 0">
+        <inertial pos="-1.72052e-05 0.0701802 0.00310545" mass="0.162409" diaginertia="0.000213312 0.000167164 7.01522e-05"/>
+        <joint name="shoulder_lift" pos="0 0 0" axis="1 0 0" range="0 3.5" actuatorfrcrange="-35 35"/>
+        <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="Upper_Arm"/>
+        <body name="lower_arm" pos="0 0.11257 0.028" quat="0.707109 0.707105 0 0">
+          <inertial pos="-0.00339604 0.00137796 0.0768007" mass="0.147968" diaginertia="0.000138803 0.000107748 4.84242e-05"/>
+          <joint name="elbow_flex" pos="0 0 0" axis="1 0 0" range="-3.14158 0" actuatorfrcrange="-35 35"/>
+          <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="Lower_Arm"/>
+          <body name="wrist" pos="0 0.0052 0.1349" quat="0.877583 -0.479426 0 0">
+            <inertial pos="-0.00852653 -0.0352279 -2.34622e-05" mass="0.0661321" diaginertia="3.45403e-05 2.39041e-05 1.94704e-05"/>
+            <joint name="wrist_flex" pos="0 0 0" axis="1 0 0" range="-2.5 1.2" actuatorfrcrange="-35 35"/>
+            <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="Wrist_Pitch_Roll"/>
+            <body name="gripper" pos="0 -0.0601 0" quat="0.707109 0 0.707105 0">
+              <inertial pos="0.00552377 -0.0280167 0.000483583" mass="0.0929859" diaginertia="5.03136e-05 4.64098e-05 2.72961e-05"/>
+              <joint name="wrist_roll" pos="0 0 0" axis="0 1 0" range="-3.14158 3.14158" actuatorfrcrange="-35 35"/>
+              <body name="camera_center" pos="0.0 -0.03 0.08">
+                <camera name="egocentric" pos="0 0 0" xyaxes="-1 0 0 0 0 1" fovy="90"/>
+              </body>
+              <body name="jaw" pos="-0.0202 -0.0244 0" quat="6.32679e-06 0 1 0">
+                <inertial pos="-0.00161745 -0.0303473 0.000449646" mass="0.0202444" diaginertia="1.11265e-05 8.99651e-06 2.99548e-06"/>
+                <joint name="gripper" pos="0 0 0" axis="0 0 1" range="-0.2 2" actuatorfrcrange="-35 35"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <position class="so100_servo" name="shoulder_pan" joint="shoulder_pan" ctrlrange="-2 2"/>
+    <position class="so100_servo" name="shoulder_lift" joint="shoulder_lift" ctrlrange="0 3.5"/>
+    <position class="so100_servo" name="elbow_flex" joint="elbow_flex" ctrlrange="-3.14158 0"/>
+    <position class="so100_servo" name="wrist_flex" joint="wrist_flex" ctrlrange="-2.5 1.2"/>
+    <position class="so100_servo" name="wrist_roll" joint="wrist_roll" ctrlrange="-3.14158 3.14158"/>
+    <position class="so100_servo" name="gripper" joint="gripper" ctrlrange="-0.2 2"/>
+  </actuator>
+</mujoco>

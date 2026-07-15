@@ -1,0 +1,57 @@
+services:
+  lerobot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: lerobot-mujoco-tutorial:latest
+    container_name: lerobot-mujoco
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    environment:
+      - DISPLAY=${DISPLAY}
+      - MUJOCO_GL=${MUJOCO_GL:-glfw}
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-all}
+      - HF_HUB_OFFLINE=1 # Disable Hugging Face Hub access (for mujoco-py)
+    devices:
+      - /dev/dri:/dev/dri
+    ports:
+      - "8888:8888"
+    shm_size: "8gb"
+    stdin_open: true
+    tty: true
+    command: bash
+    #deploy:
+    #  resources:
+    #    reservations:
+    #      devices:
+    #        - driver: nvidia
+    #          count: all
+    #          capabilities: [gpu]
+
+  lerobot-runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
+    image: lerobot-mujoco-runtime:latest
+    container_name: lerobot-mujoco-runtime
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    environment:
+      - DISPLAY=${DISPLAY}
+      - MUJOCO_GL=${MUJOCO_GL:-glfw}
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-all}
+      # Leave HF_HUB_OFFLINE unset here so uploads/downloads can work by default.
+    devices:
+      - /dev/dri:/dev/dri
+    ports:
+      - "8889:8888"
+    shm_size: "8gb"
+    stdin_open: true
+    tty: true
+    command: bash -lc 'if [ -f /workspace/token.txt ]; then export HF_TOKEN="$(cat /workspace/token.txt)"; fi; exec bash'

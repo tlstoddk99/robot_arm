@@ -1,0 +1,103 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+scripts/__pycache__/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Data directories (exclude all data)
+data/
+!data/.gitkeep
+
+# Checkpoints and models
+checkpoints/
+!checkpoints/.gitkeep
+ckpt/
+
+# Training logs
+wandb/
+logs/
+MUJOCO_LOG.TXT
+scripts/MUJOCO_LOG.TXT
+
+# Assets (large files - exclude most, keep essential robot meshes)
+asset/objaverse/
+!asset/objaverse/*.xml
+
+# Exclude large 3D model files globally
+*.stl
+*.STL  
+*.step
+*.STEP
+*.dae
+*.DAE
+*.obj
+*.OBJ
+*.3mf
+*.zip
+
+# But include essential robot mesh files
+!asset/robotis_omy/assets/*.stl
+!asset/so_arm100/SO100/assets/*.stl
+!asset/so_arm100/SO101/assets/*.stl
+
+# Media files
+#media/
+#!media/*.md
+#!media/.gitkeep
+
+# Third-party large files
+third_party/SO-ARM100/STL/
+third_party/SO-ARM100/STEP/
+third_party/SO-ARM100/3DPRINT.md
+third_party/SO-ARM100/Optional/
+third_party/SO-ARM100/Mini/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# LeRobot
+lerobot/
+
+# doc files
+REFACTORING_SUMMARY.md
+PATH_FIX_NOTES.md
+
+# Secrets / tokens
+token.txt
+
+# Other pipelines (keep locally, do not commit to repo)
+scripts/deploy/deploy_pi0.py
+scripts/deploy/deploy_smolvla.py
+scripts/visualize/visualize_data_language.py
+scripts/language_env.py
+scripts/train/train_model.py
+configs/pi0_so101.yaml
+configs/smolvla_so101.yaml
+notebooks/5.language_env.ipynb
+notebooks/6.visualize_data.ipynb
+notebooks/7.pi0.ipynb
+notebooks/8.smolvla.ipynb

@@ -1,0 +1,74 @@
+<mujocoinclude>
+  <compiler angle="radian" autolimits="true"/>
+  <default>
+    <default class="so101_new_calib">
+      <joint damping="1" frictionloss="0.1" armature="0.005"/>
+      <position kp="50"/>
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+      <default class="collision">
+        <!-- High friction on all arm collision surfaces ensures blocks don't slip
+             out of the gripper jaw. Combined with block friction 0.8 via mean
+             combinemode: (3.0+0.8)/2 = 1.9 sliding friction at grasp contact. -->
+        <geom group="3" friction="3.0 0.1 0.01" condim="4" solref="0.004 1" solimp="0.95 0.99 0.001" margin="0" gap="0"/>
+      </default>
+    </default>
+  </default>
+  <!-- Additional joints_properties.xml -->
+  <default>
+    <default class="sts3215">
+      <geom contype="0" conaffinity="0"/>
+      <joint damping="0.60" frictionloss="0.052" armature="0.028"/>
+      <!-- These gains are not a 1-to-1 mapping of the servo gains used in
+           Lerobot. These position gains and forces were calculated according to
+           https://github.com/Gregory119/RBE501-RL-arm-project/blob/main/gymnasium_env/README.md,
+           assuming that the servo proportional gain is set to 16. -->
+      <position kp="998.22" kv="2.731" forcerange="-2.94 2.94"/>
+    </default>
+    <default class="backlash">
+      <!-- +/- 0.5° of backlash -->
+      <joint damping="0.01" frictionloss="0" armature="0.01" limited="true" range="-0.008726646259971648 0.008726646259971648"/>
+    </default>
+  </default>
+  <asset>
+    <mesh file="assets/waveshare_mounting_plate_so101_v2.stl"/>
+    <mesh file="assets/sts3215_03a_v1.stl"/>
+    <mesh file="assets/motor_holder_so101_base_v1.stl"/>
+    <mesh file="assets/wrist_roll_follower_so101_v1.stl"/>
+    <mesh file="assets/moving_jaw_so101_v1.stl"/>
+    <mesh file="assets/base_motor_holder_so101_v1.stl"/>
+    <mesh file="assets/upper_arm_so101_v1.stl"/>
+    <mesh file="assets/wrist_roll_pitch_so101_v2.stl"/>
+    <mesh file="assets/under_arm_so101_v1.stl"/>
+    <mesh file="assets/rotation_pitch_so101_v1.stl"/>
+    <mesh file="assets/motor_holder_so101_wrist_v1.stl"/>
+    <mesh file="assets/sts3215_03a_no_horn_v1.stl"/>
+    <mesh file="assets/base_so101_v2.stl"/>
+    <material name="base_motor_holder_so101_v1_material" rgba="1 0.82 0.12 1"/>
+    <material name="base_so101_v2_material" rgba="1 0.82 0.12 1"/>
+    <material name="sts3215_03a_v1_material" rgba="0.1 0.1 0.1 1"/>
+    <material name="waveshare_mounting_plate_so101_v2_material" rgba="1 0.82 0.12 1"/>
+    <material name="motor_holder_so101_base_v1_material" rgba="1 0.82 0.12 1"/>
+    <material name="rotation_pitch_so101_v1_material" rgba="1 0.82 0.12 1"/>
+    <material name="upper_arm_so101_v1_material" rgba="1 0.82 0.12 1"/>
+    <material name="under_arm_so101_v1_material" rgba="1 0.82 0.12 1"/>
+    <material name="motor_holder_so101_wrist_v1_material" rgba="1 0.82 0.12 1"/>
+    <material name="sts3215_03a_no_horn_v1_material" rgba="0.1 0.1 0.1 1.0"/>
+    <material name="wrist_roll_pitch_so101_v2_material" rgba="1 0.82 0.12 1"/>
+    <material name="wrist_roll_follower_so101_v1_material" rgba="1 0.82 0.12 1"/>
+    <material name="moving_jaw_so101_v1_material" rgba="1 0.82 0.12 1"/>
+  </asset>
+  <actuator>
+    <position class="sts3215" name="shoulder_pan" joint="shoulder_pan" forcerange="-3.35 3.35" ctrlrange="-1.91986 1.91986"/>
+    <position class="sts3215" name="shoulder_lift" joint="shoulder_lift" forcerange="-3.35 3.35" ctrlrange="-1.74533 1.74533"/>
+    <position class="sts3215" name="elbow_flex" joint="elbow_flex" forcerange="-3.35 3.35" ctrlrange="-1.69 1.69"/>
+    <position class="sts3215" name="wrist_flex" joint="wrist_flex" forcerange="-3.35 3.35" ctrlrange="-1.65806 1.65806"/>
+    <position class="sts3215" name="wrist_roll" joint="wrist_roll" forcerange="-3.35 3.35" ctrlrange="-2.74385 2.84121"/>
+    <position class="sts3215" name="gripper" joint="gripper" forcerange="-3.35 3.35" ctrlrange="-0.17453 1.74533"/>
+  </actuator>
+  <contact>
+    <exclude body1="gripper" body2="moving_jaw_so101_v1"/>
+  </contact>
+  <equality/>
+</mujocoinclude>

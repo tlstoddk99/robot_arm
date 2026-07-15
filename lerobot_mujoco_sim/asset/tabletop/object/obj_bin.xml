@@ -1,0 +1,27 @@
+<mujocoinclude>
+
+    <worldbody>
+      <body name="body_obj_bin" pos="0.25 -0.12 0.80">
+            <!-- No free joint: bin is fixed in place every episode. -->
+
+            <geom type="box" size="0.06 0.06 0.006" pos="0 0 0.006" rgba="0.2 0.2 0.25 1"
+                  contype="1" conaffinity="1" condim="4" friction="1.0 0.02 0.002"
+                  solref="0.01 1" solimp="0.9 0.97 0.01" margin="0" gap="0" />
+            <geom type="box" size="0.006 0.06 0.0125" pos="0.054 0 0.018" rgba="0.2 0.2 0.25 1"
+                  contype="1" conaffinity="1" condim="4" friction="1.0 0.02 0.002"
+                  solref="0.01 1" solimp="0.9 0.97 0.01" margin="0" gap="0" />
+            <geom type="box" size="0.006 0.06 0.0125" pos="-0.054 0 0.018" rgba="0.2 0.2 0.25 1"
+                  contype="1" conaffinity="1" condim="4" friction="1.0 0.02 0.002"
+                  solref="0.01 1" solimp="0.9 0.97 0.01" margin="0" gap="0" />
+            <geom type="box" size="0.06 0.006 0.0125" pos="0 0.054 0.018" rgba="0.2 0.2 0.25 1"
+                  contype="1" conaffinity="1" condim="4" friction="1.0 0.02 0.002"
+                  solref="0.01 1" solimp="0.9 0.97 0.01" margin="0" gap="0" />
+            <geom type="box" size="0.06 0.006 0.0125" pos="0 -0.054 0.018" rgba="0.2 0.2 0.25 1"
+                  contype="1" conaffinity="1" condim="4" friction="1.0 0.02 0.002"
+                  solref="0.01 1" solimp="0.9 0.97 0.01" margin="0" gap="0" />
+
+            <inertial pos="0 0 0.03" mass="0.5" diaginertia="0.002 0.002 0.002" />
+        </body>
+    </worldbody>
+
+</mujocoinclude>
