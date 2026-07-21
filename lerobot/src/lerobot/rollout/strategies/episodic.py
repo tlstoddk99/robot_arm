@@ -53,7 +53,29 @@ from .core import RolloutStrategy, safe_push_to_hub, send_next_action
 
 logger = logging.getLogger(__name__)
 
+def _record_success_stat(task: str, success: bool, path: str = "perm_success_stats.json") -> None:
+    """Append a success/failure result for this task string to a local JSON stats file."""
+    import json
+    import os
+    from datetime import datetime
 
+    stats = {}
+    if os.path.exists(path):
+        with open(path) as f:
+            stats = json.load(f)
+
+    entry = stats.setdefault(task, {"success": 0, "total": 0, "log": []})
+    entry["total"] += 1
+    if success:
+        entry["success"] += 1
+    entry["log"].append({"success": success, "time": datetime.now().isoformat()})
+
+    with open(path, "w") as f:
+        json.dump(stats, f, indent=2)
+
+    rate = entry["success"] / entry["total"]
+    logger.info(f"[STATS] task='{task}' success={entry['success']}/{entry['total']} ({rate:.1%})")
+    
 class EpisodicStrategy(RolloutStrategy):
     """Policy-driven multi-episode recording, mirrors the behavior of ``lerobot-record``.
 
@@ -189,6 +211,18 @@ class EpisodicStrategy(RolloutStrategy):
 
                     dataset.save_episode()
                     recorded_episodes += 1
+                    # Wait for the operator to mark success (up arrow) or failure (down arrow).
+                    events["episode_success"] = None
+                    print(
+                        f"Episode {recorded_episodes}/{num_episodes} — "
+                        "press UP arrow for success, DOWN arrow for failure..."
+                    )
+                    while events["episode_success"] is None and not events["stop_recording"]:
+                        time.sleep(0.05)
+                    if events["stop_recording"]:
+                        break
+                    _record_success_stat(single_task, success=events["episode_success"])
+                    events["episode_success"] = None
             finally:
                 # Save any frames buffered in the current episode so an unexpected
                 # exception or KeyboardInterrupt does not silently drop recorded data.

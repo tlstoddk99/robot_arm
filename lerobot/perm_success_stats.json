@@ -1,0 +1,64 @@
+{
+  "Build a tower, place the Red block on the bottom, Green in the middle, and Blue on top": {
+    "success": 3,
+    "total": 14,
+    "log": [
+      {
+        "success": false,
+        "time": "2026-07-21T14:54:07.956481"
+      },
+      {
+        "success": false,
+        "time": "2026-07-21T14:55:48.603480"
+      },
+      {
+        "success": false,
+        "time": "2026-07-21T14:57:47.318468"
+      },
+      {
+        "success": true,
+        "time": "2026-07-21T14:59:23.242011"
+      },
+      {
+        "success": false,
+        "time": "2026-07-21T15:00:57.722844"
+      },
+      {
+        "success": false,
+        "time": "2026-07-21T15:02:43.341758"
+      },
+      {
+        "success": false,
+        "time": "2026-07-21T15:04:33.184771"
+      },
+      {
+        "success": false,
+        "time": "2026-07-21T15:06:24.792426"
+      },
+      {
+        "success": false,
+        "time": "2026-07-21T15:08:14.428940"
+      },
+      {
+        "success": true,
+        "time": "2026-07-21T15:48:49.081633"
+      },
+      {
+        "success": true,
+        "time": "2026-07-21T15:50:31.045695"
+      },
+      {
+        "success": false,
+        "time": "2026-07-21T15:52:01.240602"
+      },
+      {
+        "success": false,
+        "time": "2026-07-21T15:53:31.103755"
+      },
+      {
+        "success": false,
+        "time": "2026-07-21T15:55:12.517036"
+      }
+    ]
+  }
+}

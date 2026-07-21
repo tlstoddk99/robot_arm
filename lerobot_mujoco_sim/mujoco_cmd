@@ -1,0 +1,3 @@
+python scripts/teleop_bridge/leader_to_mujoco.py \
+  --leader-port /dev/ttyACM1 \
+  --leader-id my_leader

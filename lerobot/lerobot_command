@@ -60,69 +60,59 @@ lerobot-record \
     --teleop.port=/dev/ttyACM1 \
     --teleop.id=my_leader \
     --display_data=true \
-    --dataset.repo_id=${HF_USER}/train_v1_RBG \
+    --dataset.repo_id=${HF_USER}/train_v1_BGR \
     --dataset.num_episodes=20 \
-    --dataset.single_task="Stack a 3-floor tower with R,G,B blocks, one per floor, picking by proximity to gripper (perm RBG)"
+    --dataset.single_task="Build a tower, place the Blue block on the bottom, Green in the middle, and Red on top"
+
+Build a tower, place the Red block on the bottom, Green in the middle, and Blue on top
+Build a tower, place the Red block on the bottom, Blue in the middle, and Green on top
+Build a tower, place the Green block on the bottom, Blue in the middle, and Red on top
+Build a tower, place the Green block on the bottom, Red in the middle, and Blue on top
+Build a tower, place the Blue block on the bottom, Red in the middle, and Green on top
+Build a tower, place the Blue block on the bottom, Green in the middle, and Red on top
     
     
-lerobot-edit-dataset \
-  --repo_id /home/a/.cache/huggingface/lerobot/Do-Hyun-robot/train_v1_RGB_20260713_155713 \
-  --operation.type merge \
-  --operation.repo_ids "['/home/a/.cache/huggingface/lerobot/Do-Hyun-robot/train_v1_RGB_20260713_155713', '/home/a/.cache/huggingface/lerobot/Do-Hyun-robot/train_v1_RBG_20260714_140309', '/home/a/.cache/huggingface/lerobot/Do-Hyun-robot/train_v1_GBR_20260713_165217', '/home/a/.cache/huggingface/lerobot/Do-Hyun-robot/train_v1_GRB_20260713_171847', '/home/a/.cache/huggingface/lerobot/Do-Hyun-robot/train_v1_BRG_20260713_174045', '/home/a/.cache/huggingface/lerobot/Do-Hyun-robot/train_v1_BGR_20260713_180038']" \
-  --new_repo_id ${HF_USER}/train_v1_merged \
-  --new_root /home/a/.cache/huggingface/lerobot/Do-Hyun-robot/train_v1_merged \
-  --push_to_hub true
-    
-LD_PRELOAD=$CONDA_PREFIX/lib/libstdc++.so.6 \
-lerobot-train \
-  --policy.type=act \
-  --dataset.repo_id=data/pick_and_place_merged \
-  --policy.use_amp=true \
-  --batch_size=16 \
-  --steps=20000 \
-  --output_dir=outputs/train/act_pick_and_place \
-  --job_name=pick_and_place \
-  --policy.device=cuda \
-  --wandb.enable=true \
-  --policy.push_to_hub=false
-  
 lerobot-train \
   --dataset.repo_id=${HF_USER}/train_v1_merged \
-  --output_dir=./outputs/train/smolvla_dohyun_v3 \
-  --job_name=smolvla_dohyun_v3 \
-  --policy.repo_id=${HF_USER}/smolvla_dohyun_v3_policy \
+  --output_dir=./outputs/train/act_dohyun \
+  --job_name=act_dohyun \
+  --policy.type=act \
+  --policy.device=cuda \
+  --policy.push_to_hub=false \
+  --steps=100000 \
+  --save_freq=10000 \
+  --batch_size=8 \
+  --wandb.enable=true
+  
+lerobot-train \
+  --dataset.repo_id=${HF_USER}/train_v2_merged \
+  --output_dir=./outputs/train/smolvla_dohyun_v4 \
+  --job_name=smolvla_dohyun_v4 \
+  --policy.repo_id=${HF_USER}/smolvla_dohyun_v4_policy \
   --policy.path=lerobot/smolvla_base \
   --policy.device=cuda \
-  --steps=40000 \
-  --save_freq=2000 \
+  --steps=20000 \
+  --save_freq=4000 \
   --batch_size=64 \
   --wandb.enable=true \
   --rename_map='{"observation.images.front": "observation.images.camera1", "observation.images.top": "observation.images.camera2"}'
-
-HF_HUB_OFFLINE=1 lerobot-record \
-  --robot.type=so101_follower \
-  --robot.port=/dev/ttyACM0 \
-  --robot.id=my_follower \
-  --robot.cameras="{ front: {type: opencv, index_or_path: 4, width: 640, height: 480, fps: 30, fourcc: MJPG}, top: {type: opencv, index_or_path: 2, width: 640, height: 480, fps: 30, fourcc: MJPG}}" \
-  --policy.path=outputs/train/act_pick_and_place/checkpoints/last/pretrained_model \
-  --policy.device=cuda \
-  --display_data=true \
-  --dataset.repo_id=local/eval_pick_and_place_1 \
-  --dataset.single_task="move small cube into the box" \
-  --dataset.num_episodes=5 \
-  --dataset.episode_time_s=60 \
-  --dataset.push_to_hub=false
   
 lerobot-rollout \
-  --strategy.type=base \
-  --policy.path=outputs/train/smolvla_dohyun_v2/checkpoints/last/pretrained_model \
+  --strategy.type=episodic \
+  --policy.path=outputs/train/smolvla_dohyun_v4/checkpoints/last/pretrained_model \
   --robot.type=so101_follower \
   --robot.port=/dev/ttyACM0 \
   --robot.id=my_follower \
   --robot.cameras="{ front: {type: opencv, index_or_path: 4, width: 640, height: 480, fps: 30, fourcc: MJPG}, top: {type: opencv, index_or_path: 2, width: 640, height: 480, fps: 30, fourcc: MJPG}}" \
-  --task="Build a tower: place the Blue block on the bottom, Green in the middle, and Red on top" \
-  --duration=120 \
+  --task="Build a tower, place the Red block on the bottom, Green in the middle, and Blue on top" \
+  --dataset.repo_id=${HF_USER}/rollout_eval_RGB \
+  --dataset.single_task="Build a tower, place the Red block on the bottom, Green in the middle, and Blue on top" \
+  --dataset.num_episodes=50 \
+  --dataset.episode_time_s=60 \
+  --dataset.reset_time_s=20 \
   --rename_map='{"observation.images.front": "observation.images.camera1", "observation.images.top": "observation.images.camera2"}' \
-  --display_data=false
-  
+  --display_data=false \
+  --dataset.push_to_hub=false
+
+
 pgrep -f lerobot-rollout
