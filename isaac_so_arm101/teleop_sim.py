@@ -1,99 +1,190 @@
-"""Leader 팔(흰색, ttyACM1) → 시뮬 SO-101 텔레오프 (1단계: 시뮬만)
-   방법1: arm action을 순수 위치제어(scale=1, offset=off)로 override"""
+"""Leader(흰색,ACM1) → 실물 follower(검정,ACM0) + 시뮬 SO-101 동시 텔레오프
+   + 시뮬/실제 카메라 4개 뷰 실시간 창 표시 (저장은 옵션)"""
 import argparse
 import math
+import os
 from isaaclab.app import AppLauncher
 
+# ===== 설정 =====
+TASK        = "Isaac-SO-ARM101-RGBBlocks-Play-v0"
+LEADER_PORT   = "/dev/ttyACM1"
+LEADER_ID     = "my_leader"
+FOLLOWER_PORT = "/dev/ttyACM0"
+FOLLOWER_ID   = "my_follower"
+
+ARM = ["shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll"]
+SIGN   = {"shoulder_pan": 1, "shoulder_lift": 1, "elbow_flex": 1, "wrist_flex": 1, "wrist_roll": 1}
+OFFSET = {"shoulder_pan": 0, "shoulder_lift": 110, "elbow_flex": -90, "wrist_flex": 0, "wrist_roll": -45}
+GRIP_OPEN_DEG = 45.0
+GRIP_OPEN, GRIP_CLOSE = 0.5, 0.0
+
+SIM_CAMS  = {"top_cam": "top", "gripper_cam": "gripper"}   # 시뮬 카메라
+REAL_CAMS = {"top": 2, "gripper": 4}                        # video2=탑뷰, video4=그리퍼
+CAM_W, CAM_H, CAM_FPS = 640, 480, 30
+SAVE_DIR   = "frames"
+VIEW_EVERY = 3     # N 스텝마다 창 갱신 (너무 자주면 느림)
+SAVE_EVERY = 10
+# ================
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--task", default="Isaac-SO-ARM101-RGBBlocks-Play-v0")
-parser.add_argument("--leader_port", default="/dev/ttyACM1")
-parser.add_argument("--leader_id", default="my_leader")
 parser.add_argument("--num_envs", type=int, default=1)
 parser.add_argument("--disable_fabric", action="store_true", default=False)
-parser.add_argument("--debug", action="store_true", help="관절값 출력")
+parser.add_argument("--no_follower", action="store_true")
+parser.add_argument("--save_cam", action="store_true", help="이미지도 저장")
+parser.add_argument("--debug", action="store_true")
 AppLauncher.add_app_launcher_args(parser)
-args_cli = parser.parse_args()
-args_cli.enable_cameras = True
+args = parser.parse_args()
+args.enable_cameras = True
 
-app_launcher = AppLauncher(args_cli)
+app_launcher = AppLauncher(args)
 simulation_app = app_launcher.app
 
 import gymnasium as gym
 import torch
+import numpy as np
 import isaac_so_arm101.tasks
 from isaaclab_tasks.utils import parse_env_cfg
 from lerobot.teleoperators.so_leader import SO101Leader, SO101LeaderConfig
+from lerobot.robots.so_follower import SO101Follower, SO101FollowerConfig
+import cv2
+import matplotlib
+matplotlib.use("TkAgg")   # 실시간 창 백엔드 (안 되면 Qt5Agg 시도)
+import matplotlib.pyplot as plt
 
-# arm 5개 (Isaac arm_action 순서) + gripper는 별도(Binary)
-ARM_ORDER = ["shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll"]
+try:
+    import imageio.v2 as imageio
+except Exception:
+    import imageio
 
-# 관절별 부호 (관찰: shoulder_lift, elbow_flex 반대)
-JOINT_SIGN = {
-    "shoulder_pan":  1.0,
-    "shoulder_lift": 1.0,
-    "elbow_flex":    1.0,
-    "wrist_flex":    1.0,
-    "wrist_roll":    1.0,
-}
-# 영점 offset (deg) — 필요시 조정
-JOINT_OFFSET = {
-    "shoulder_pan": 0.0, "shoulder_lift": 0.0, "elbow_flex": 0.0,
-    "wrist_flex":   0.0, "wrist_roll":    0.0,
-}
-GRIP_THRESH = 45.0   # leader gripper 이 각도 넘으면 열림
-
-_prev_deg = {}
+_prev = {}
 def _unwrap(name, deg):
-    if name in _prev_deg:
-        d = deg - _prev_deg[name]
+    if name in _prev:
+        d = deg - _prev[name]
         if d > 180: deg -= 360
         elif d < -180: deg += 360
-    _prev_deg[name] = deg
+    _prev[name] = deg
     return deg
 
-def leader_to_action(leader_dict, device, debug=False):
-    vals = []
-    for j in ARM_ORDER:
-        deg = leader_dict.get(f"{j}.pos", 0.0)
-        deg = _unwrap(j, deg)
-        rad = math.radians(deg - JOINT_OFFSET[j]) * JOINT_SIGN[j]
-        vals.append(rad)
-    # gripper: Binary action (양수=열림, 음수=닫힘)
-    grip_deg = leader_dict.get("gripper.pos", 0.0)
-    grip_cmd = 1.0 if grip_deg > GRIP_THRESH else -1.0
-    vals.append(grip_cmd)
-    if debug:
-        print(" | ".join(f"{j}:{v:6.2f}" for j, v in zip(ARM_ORDER + ["grip"], vals)))
-    return torch.tensor([vals], dtype=torch.float32, device=device)
+def arm_rad(ld):
+    return [math.radians(_unwrap(j, ld.get(f"{j}.pos", 0.0)) - OFFSET[j]) * SIGN[j] for j in ARM]
+
+def grip_open(ld):
+    return ld.get("gripper.pos", 0.0) > GRIP_OPEN_DEG
+
+def open_real_cams():
+    caps = {}
+    for name, idx in REAL_CAMS.items():
+        cap = cv2.VideoCapture(idx)
+        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAM_W)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAM_H)
+        cap.set(cv2.CAP_PROP_FPS, CAM_FPS)
+        caps[name] = cap
+        print(f"[cam] real '{name}' (video{idx}) opened={cap.isOpened()}")
+    return caps
+
+def get_sim_img(env, cam):
+    rgb = env.scene[cam].data.output["rgb"]
+    return rgb[0, ..., :3].detach().cpu().numpy().astype("uint8")
+
+def get_real_img(cap):
+    ok, frame = cap.read()
+    if not ok:
+        return np.zeros((CAM_H, CAM_W, 3), np.uint8)
+    return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+class Viewer:
+    """2x2 실시간 창: [sim_top, real_top] / [sim_gripper, real_gripper]"""
+    def __init__(self):
+        plt.ion()
+        self.fig, self.ax = plt.subplots(2, 2, figsize=(10, 7))
+        self.titles = [["SIM top", "REAL top"], ["SIM gripper", "REAL gripper"]]
+        self.im = [[None, None], [None, None]]
+        blank = np.zeros((CAM_H, CAM_W, 3), np.uint8)
+        for r in range(2):
+            for c in range(2):
+                self.im[r][c] = self.ax[r][c].imshow(blank)
+                self.ax[r][c].set_title(self.titles[r][c])
+                self.ax[r][c].axis("off")
+        self.fig.tight_layout()
+
+    def update(self, imgs):
+        # imgs: dict {"sim_top","real_top","sim_gripper","real_gripper"}
+        self.im[0][0].set_data(imgs["sim_top"])
+        self.im[0][1].set_data(imgs["real_top"])
+        self.im[1][0].set_data(imgs["sim_gripper"])
+        self.im[1][1].set_data(imgs["real_gripper"])
+        self.fig.canvas.draw_idle()
+        self.fig.canvas.flush_events()
 
 def main():
-    env_cfg = parse_env_cfg(
-        args_cli.task, device=args_cli.device,
-        num_envs=args_cli.num_envs, use_fabric=not args_cli.disable_fabric,
-    )
-    env_cfg.episode_length_s = 100000.0
+    cfg = parse_env_cfg(TASK, device=args.device, num_envs=args.num_envs,
+                        use_fabric=not args.disable_fabric)
+    cfg.episode_length_s = 1e9
+    cfg.actions.arm_action.scale = 1.0
+    cfg.actions.arm_action.use_default_offset = False
+    cfg.scene.ee_frame.debug_vis = False
+    cfg.commands.object_pose.debug_vis = False
+    env = gym.make(TASK, cfg=cfg).unwrapped
 
-    # 방법1: arm action을 순수 절대위치 제어로 override (RL용 scale/offset 제거)
-    env_cfg.actions.arm_action.scale = 1.0
-    env_cfg.actions.arm_action.use_default_offset = False
+    robot = env.scene["robot"]
+    names = robot.data.joint_names
+    arm_ix = [names.index(j) for j in ARM]
+    grip_ix = names.index("gripper")
 
-    env = gym.make(args_cli.task, cfg=env_cfg).unwrapped
+    real_caps = open_real_cams()
+    viewer = Viewer()
+    if args.save_cam:
+        os.makedirs(SAVE_DIR, exist_ok=True)
+        print(f"[cam] 저장 켜짐: ./{SAVE_DIR}/")
 
-    cfg = SO101LeaderConfig(port=args_cli.leader_port, id=args_cli.leader_id)
-    leader = SO101Leader(cfg)
+    leader = SO101Leader(SO101LeaderConfig(port=LEADER_PORT, id=LEADER_ID))
     leader.connect()
-    print("[teleop] leader 연결됨. 팔을 움직이면 시뮬이 따라갑니다. (Ctrl+C 종료)")
+
+    follower = None
+    if not args.no_follower:
+        follower = SO101Follower(SO101FollowerConfig(port=FOLLOWER_PORT, id=FOLLOWER_ID))
+        follower.connect()
 
     env.reset()
+
+    ld = leader.get_action()
+    q = robot.data.default_joint_pos.clone()
+    for ix, val in zip(arm_ix, arm_rad(ld)):
+        q[0, ix] = val
+    q[0, grip_ix] = GRIP_OPEN if grip_open(ld) else GRIP_CLOSE
+    robot.write_joint_state_to_sim(q, torch.zeros_like(q))
+    print("[teleop] 미러링 + 4뷰 표시 시작 (Ctrl+C 종료)")
+
+    step = 0
     try:
         while simulation_app.is_running():
-            leader_dict = leader.get_action()
-            action = leader_to_action(leader_dict, env.device, args_cli.debug)
-            env.step(action)
+            ld = leader.get_action()
+            if follower is not None:
+                follower.send_action(ld)
+            vals = arm_rad(ld) + [1.0 if grip_open(ld) else -1.0]
+            env.step(torch.tensor([vals], dtype=torch.float32, device=env.device))
+
+            if step % VIEW_EVERY == 0:
+                imgs = {
+                    "sim_top":     get_sim_img(env, "top_cam"),
+                    "sim_gripper": get_sim_img(env, "gripper_cam"),
+                    "real_top":     get_real_img(real_caps["top"]),
+                    "real_gripper": get_real_img(real_caps["gripper"]),
+                }
+                viewer.update(imgs)
+                if args.save_cam and step % SAVE_EVERY == 0:
+                    for k, im in imgs.items():
+                        imageio.imwrite(os.path.join(SAVE_DIR, f"{k}_{step:06d}.png"), im)
+            step += 1
     except KeyboardInterrupt:
         print("\n[teleop] 종료")
     finally:
+        for cap in real_caps.values():
+            cap.release()
         leader.disconnect()
+        if follower is not None:
+            follower.disconnect()
         env.close()
         simulation_app.close()
 

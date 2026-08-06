@@ -45,16 +45,21 @@ CAM_PLATE  = (0.035, 0.035, 0.005)
 CAM_LENS_R = 0.0075
 CAM_LENS_H = 0.018
 CAM_NEAR   = 0.05                          
+# CAM_FOCAL    = 8.5      # Innomaker U20CAM-720P: 수평 FOV 102도
+CAM_FOCAL    = 20.0
+CAM_APERTURE = 20.955   # 센서 가로(mm)
 
 # 그리퍼캠
-GRIPCAM_OFFSET_POS = (0.0, -0.05, 0.00)
-GRIPCAM_EULER      = (-20.0, 180.0, 0.0)  
+# GRIPCAM_OFFSET_POS = (0.0, -0.05, 0.00)
+GRIPCAM_OFFSET_POS = (0.0, -0.07, 0.0035)  
+GRIPCAM_EULER      = (-25.0, 180.0, 0.0)  
 
 # 탑뷰 거치대/카메라
-TOPCAM_STAND_XY   = (0.43, 0.00)           
+TOPCAM_STAND_XY   = (0.43, 0.035)           
 TOPCAM_STAND_SIZE = (0.025, 0.035, 0.39)   
-TOPCAM_POS        = (0.40, 0.00, 0.39)     
-TOPCAM_EULER      = (0.0, -160.0, 0.0)      
+TOPCAM_POS        = (0.40, 0.038, 0.40)     
+# TOPCAM_EULER      = (0.0, -160.0, -90.0)      
+TOPCAM_EULER      = (-150.0, 4.5, -270.0)
 # ================================================================
 
 GRIPCAM_ROT = _euler_deg_to_quat(*GRIPCAM_EULER)
@@ -136,7 +141,7 @@ class SoArm101RGBBlocksEnvCfg(SoArm101LiftCubeEnvCfg):
         self.scene.top_cam = CameraCfg(
             prim_path="{ENV_REGEX_NS}/top_cam",
             update_period=0.0, height=CAM_H, width=CAM_W, data_types=["rgb"],
-            spawn=sim_utils.PinholeCameraCfg(focal_length=24.0, clipping_range=(CAM_NEAR, 10.0)),
+            spawn=sim_utils.PinholeCameraCfg(focal_length=CAM_FOCAL, horizontal_aperture=CAM_APERTURE, clipping_range=(CAM_NEAR, 10.0)),
             offset=CameraCfg.OffsetCfg(pos=TOPCAM_POS, rot=TOPCAM_ROT, convention="ros"),
         )
         self.scene.top_cam_body = _cam_plate("{ENV_REGEX_NS}/top_cam_body", TOPCAM_POS, TOPCAM_ROT)
@@ -156,7 +161,7 @@ class SoArm101RGBBlocksEnvCfg(SoArm101LiftCubeEnvCfg):
         self.scene.gripper_cam = CameraCfg(
             prim_path="{ENV_REGEX_NS}/Robot/gripper_link/grip_cam",
             update_period=0.0, height=CAM_H, width=CAM_W, data_types=["rgb"],
-            spawn=sim_utils.PinholeCameraCfg(focal_length=18.0, clipping_range=(CAM_NEAR, 10.0)),
+            spawn=sim_utils.PinholeCameraCfg(focal_length=CAM_FOCAL, horizontal_aperture=CAM_APERTURE, clipping_range=(CAM_NEAR, 10.0)),
             offset=CameraCfg.OffsetCfg(pos=GRIPCAM_OFFSET_POS, rot=GRIPCAM_ROT, convention="ros"),
         )
         self.scene.gripper_cam_body = _cam_plate(
