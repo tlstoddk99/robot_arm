@@ -14,7 +14,7 @@ FOLLOWER_ID   = "my_follower"
 
 ARM = ["shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll"]
 SIGN   = {"shoulder_pan": 1, "shoulder_lift": 1, "elbow_flex": 1, "wrist_flex": 1, "wrist_roll": 1}
-OFFSET = {"shoulder_pan": 0, "shoulder_lift": 110, "elbow_flex": -90, "wrist_flex": 0, "wrist_roll": -45}
+OFFSET = {"shoulder_pan": 0, "shoulder_lift": 0, "elbow_flex": 0, "wrist_flex": 0, "wrist_roll": -90}
 GRIP_OPEN_DEG = 45.0
 GRIP_OPEN, GRIP_CLOSE = 0.5, 0.0
 
@@ -48,8 +48,9 @@ from lerobot.teleoperators.so_leader import SO101Leader, SO101LeaderConfig
 from lerobot.robots.so_follower import SO101Follower, SO101FollowerConfig
 import cv2
 import matplotlib
-matplotlib.use("TkAgg")   # 실시간 창 백엔드 (안 되면 Qt5Agg 시도)
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
+import signal
 
 try:
     import imageio.v2 as imageio
@@ -146,6 +147,22 @@ def main():
         follower = SO101Follower(SO101FollowerConfig(port=FOLLOWER_PORT, id=FOLLOWER_ID))
         follower.connect()
 
+    def _emergency_stop(signum, frame):
+        print("[teleop] 비상 정지 — follower 토크 끄기")
+        if follower is not None:
+            try:
+                follower.bus.disable_torque()
+                print("[teleop] 토크 꺼짐")
+            except Exception as e:
+                print(f"[warn] disable_torque: {e}")
+        try: leader.disconnect()
+        except: pass
+        try:
+            if follower is not None: follower.disconnect()
+        except: pass
+        os._exit(0)
+    signal.signal(signal.SIGINT, _emergency_stop)
+
     env.reset()
 
     ld = leader.get_action()
@@ -180,12 +197,21 @@ def main():
     except KeyboardInterrupt:
         print("\n[teleop] 종료")
     finally:
+        if follower is not None:
+            try:
+                follower.bus.disable_torque()
+                print("[teleop] follower 토크 꺼짐")
+            except Exception as e:
+                print(f"[warn] disable_torque: {e}")
         for cap in real_caps.values():
             cap.release()
-        leader.disconnect()
+        try: leader.disconnect()
+        except: pass
         if follower is not None:
-            follower.disconnect()
-        env.close()
+            try: follower.disconnect()
+            except: pass
+        try: env.close()
+        except: pass
         simulation_app.close()
 
 if __name__ == "__main__":
