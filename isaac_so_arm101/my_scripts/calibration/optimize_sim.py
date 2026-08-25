@@ -28,7 +28,7 @@ TASK = "Isaac-SO-ARM101-RGBBlocks-Play-v0"
 DATA_DIR = os.path.expanduser("~/robot_arm/isaac_so_arm101/my_scripts/results/traj_data")
 FIG_DIR = os.path.expanduser("~/robot_arm/isaac_so_arm101/my_scripts/results/figures")
 
-JOINT = "shoulder_lift"
+JOINT = "wrist_flex"
 
 BASE_PARAMS = {
     "shoulder_lift": {"stiffness": 170.0, "damping": 65.0},
@@ -37,7 +37,7 @@ BASE_PARAMS = {
 }
 
 # 파라미터 스케일 (정규화용 상한): stiffness, damping, armature, fric_s, fric_v
-SCALE = np.array([400.0, 200.0, 0.5, 1.0, 0.5])
+SCALE = np.array([600.0, 200.0, 0.5, 1.0, 0.5]) 
 
 BASE_POSE_DEG = {
     "shoulder_pan": 0.0, "shoulder_lift": 0.0, "elbow_flex": 0.0,
