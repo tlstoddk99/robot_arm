@@ -14,7 +14,7 @@ FOLLOWER_ID   = "my_follower"
 
 ARM = ["shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll"]
 SIGN   = {"shoulder_pan": 1, "shoulder_lift": 1, "elbow_flex": 1, "wrist_flex": 1, "wrist_roll": 1}
-OFFSET = {"shoulder_pan": 0, "shoulder_lift": 0, "elbow_flex": 0, "wrist_flex": 0, "wrist_roll": -90}
+OFFSET = {"shoulder_pan": 0, "shoulder_lift": 0, "elbow_flex": 0, "wrist_flex": 15, "wrist_roll": -90}
 GRIP_OPEN_DEG = 45.0
 GRIP_OPEN, GRIP_CLOSE = 0.5, 0.0
 

@@ -15,7 +15,7 @@ LEADER_ID = "my_leader"
 FOLLOWER_PORT = "/dev/ttyACM0"
 FOLLOWER_ID = "my_follower"
 
-MODE = "base"   # "base" 또는 "tuned"
+MODE = "tuned"   # "base" 또는 "tuned"
 FPS = 50         # 목표 제어 주파수 (실물/시뮬 50Hz)
 
 ARM = ["shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll"]
